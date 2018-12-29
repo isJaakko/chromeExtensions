@@ -1,6 +1,6 @@
 {
     "manifest_version": 2,
-    "name": "demo",
+    "name": "changeBgColor",
     "description": "Make the current page red",
     "version": "0.0.1",
     "browser_action": {

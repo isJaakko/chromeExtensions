@@ -14,5 +14,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(value);
         changeColor(value);
     });
-
 })
