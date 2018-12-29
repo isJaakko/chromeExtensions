@@ -13,6 +13,7 @@
 由于公司在做的一个项目中需要用到浏览器插件，所以临时开始学习了一些开发技术。在了解了插件可以做的事之后，我个人还是比较感兴趣的，目前只实现了一个简单的 demo，后面会陆续补充。
 
 **demo 目录：**
+
 - demo1: 通过 `popup` 改变网页背景颜色
 - demo2: 通过 `右键菜单` 改变网页背景颜色
 
@@ -127,7 +128,9 @@ chrome.storage
 
 因为 `content_script` 有一个缺陷：无法访问页面的 JS。虽然它可以操作 DOM，但是 DOM 却不能调用它，比如在 DOM 上绑定点击事件调用 content_script 中代码（通过 `onclick` 和 `addEventListener` 两种都不可以）。
 
-但是，"在页面中添加一个按钮，并调用插件的 API 扩展"是很常见的需求，该怎么办呢？
+但是，"在页面中添加一个按钮，并调用插件的 API 扩展"是很常见的需求，该怎么办呢？来看下面这个例子。
+
+#### 通过 DOM 方式向页面注入代码
 
 在 `content_script` 中通过 DOM 方式向页面注入 `indeject-script` 代码示例：
 
@@ -182,6 +185,45 @@ GET chrome-extension://invalid/ net::ERR_FAILED
 }
 ```
 
+上面这种方式是通过往页面中插入一个 <script\> 标签的方式向页面注入代码，实际上我们不是每次都需要注入一整个文件，有时我们也许只需要注入一句代码，有更方便的办法吗？有！
+
+#### 通过编程方式向页面注入代码
+
+ 查看 [英文文档](https://developer.chrome.com/extensions/content_scripts#functionality) | [中文文档](https://crxdoc-zh.appspot.com/extensions/content_scripts#pi)
+ 
+ 首先要在 `manifest.json` 中添加权限
+ 
+**manifest.json**
+```
+{
+    // ...
+    "permissions": [
+        "activeTab"
+    ]
+    // ...
+}
+```
+ 
+**background.js**
+```
+chrome.tabs.executeScript({
+    code: 'document.body.style.backgroundColor="orange"'
+    
+});
+```
+
+或者也可以通过这种方式注入一整个文件：
+
+```
+chrome.runtime.onMessage.addListener(function(message, callback) {
+    if (message == “runContentScript”){
+        chrome.tabs.executeScript({
+        file: 'contentScript.js'
+        });
+    }
+});
+```
+
 ### popup
 `popup` 是点击  `browser_action` 图标时打开的一个小窗口网页，焦点离开网页就立即关闭，一般用来做一些临时性的交互。
 
@@ -207,4 +249,3 @@ GET chrome-extension://invalid/ net::ERR_FAILED
 由于单击图标打开 `popup`，焦点离开又立即关闭，所以 `popup` 页面的生命周期一般很短，需要长时间运行的代码千万不要写在 `popup` 里面。
 
 在权限上，它和 `background` 非常类似，它们之间最大的不同是生命周期的不同，`popup` 中可以直接通过 `chrome.extension.getBackgroundPage()` 获取 `background` 的 `window` 对象。
-
